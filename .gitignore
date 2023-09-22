@@ -161,3 +161,6 @@ cython_debug/
 
 # Vim undo files
 *~
+
+# Vim swap files
+*.swp

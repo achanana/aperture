@@ -4,6 +4,11 @@
 # If you need more help, visit the Dockerfile reference guide at
 # https://docs.docker.com/engine/reference/builder/
 
+# FROM UBUNTU
+# RUN apt-get update && \
+#     DEBIAN_FRONTEND=noninteractive apt-get -y install gcc mono-mcs && \
+#     rm -rf /var/lib/apt/lists/*
+
 ARG PYTHON_VERSION=3.9.1
 FROM python:${PYTHON_VERSION}-slim as base
 
@@ -27,6 +32,9 @@ RUN adduser \
     --no-create-home \
     --uid "${UID}" \
     appuser
+
+RUN apt-get update && \
+    apt-get install -y python3-dev gcc libc-dev g++ libc++-dev
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.
