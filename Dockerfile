@@ -34,7 +34,9 @@ RUN adduser \
     appuser
 
 RUN apt-get update && \
-    apt-get install -y python3-dev gcc libc-dev g++ libc++-dev
+    apt-get install -y g++ gcc git cmake
+# python3-dev gcc libc-dev
+# g++ libc++-dev
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.
@@ -44,8 +46,32 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,source=requirements.txt,target=requirements.txt \
     python -m pip install -r requirements.txt
 
+# ENV CCACHE_DIR=/mnt/ccache
+
+# use ccache (make it appear in path earlier then /usr/bin/gcc etc)
+# https://stackoverflow.com/questions/39650056/using-ccache-when-building-inside-of-docker
+# RUN for p in gcc g++ cc c++; do ln -vs /usr/bin/ccache /usr/local/bin/$p;  done
+
+RUN git clone --depth=1 https://github.com/opencv/opencv.git && \
+    git clone --depth=1 https://github.com/opencv/opencv_contrib
+
+RUN mkdir build
+
+WORKDIR /app/build
+
+# RUN ccache -s
+
+RUN cmake -DOPENCV_ENABLE_NONFREE=ON \
+          -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules \
+          -DCMAKE_BUILD_TYPE=RELEASE \
+          ../opencv
+
+RUN make -j8 install
+
 # Switch to the non-privileged user to run the application.
 USER appuser
+
+WORKDIR .
 
 # Copy the source code into the container.
 COPY . .
