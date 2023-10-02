@@ -5,7 +5,8 @@ import cv2
 import cv2.xfeatures2d
 import gabriel_server
 import gabriel_server.cognitive_engine
-from gabriel_server.network_engine import engine_runner as gb_engine_runner
+from gabriel_server import local_engine as gb_local_engine
+from gabriel_protocol import gabriel_pb2
 import logging
 import os
 import sys
@@ -15,7 +16,6 @@ import table
 
 DEFAULT_SOURCE_NAME = '0'
 DEFAULT_SERVER_HOST = 'localhost'
-WEBSOCKET_PORT = 9099
 ZMQ_PORT = 5555
 
 def parse_source_name_server_host():
@@ -27,12 +27,13 @@ def parse_source_name_server_host():
 def main():
     image_db = table.ImageDataTable()
     logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
-    server = ApertureServer(image_db)
     SERVER_ADDRESS_FORMAT = 'tcp://{}:{}'
     args = parse_source_name_server_host()
     server_address = \
         SERVER_ADDRESS_FORMAT.format(args.server_host, ZMQ_PORT)
-    gb_engine_runner.run(server, args.source_name, server_address)
+    engine_factory = lambda: ApertureServer(image_db)
+    gb_local_engine.run(engine_factory, args.source_name,
+                        input_queue_maxsize=60, port=8099, num_tokens=2)
 
 class ApertureServer(gabriel_server.cognitive_engine.Engine):
     def __init__(self, image_db):

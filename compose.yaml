@@ -10,9 +10,12 @@
 services:
   server:
     build:
-      context: .
-    ports:
-      - 8000:8000
+      context: server
+    expose:
+      - "8099"
+  client:
+    build:
+      context: client
 
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to

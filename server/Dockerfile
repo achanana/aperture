@@ -41,7 +41,8 @@ ENV CCACHE_DIR=/mnt/ccache
 
 RUN cmake -DOPENCV_ENABLE_NONFREE=ON \
           -DOPENCV_EXTRA_MODULES_PATH=/opencv_contrib/modules \
-          -DCMAKE_BUILD_TYPE=RELEASE \
+          -DBUILD_TESTS=OFF \
+          -DBUILD_PERF_TESTS=OFF \
           /opencv
 
 RUN --mount=type=cache,target=$CCACHE_DIR \
@@ -95,6 +96,7 @@ COPY . .
 
 # Expose the port that the application listens on.
 EXPOSE 8000
+EXPOSE 9099
 
 # Run the application.
 CMD python server.py
