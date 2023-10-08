@@ -1,18 +1,22 @@
 # Author: Aditya Chanana
 
 import argparse
+from base64 import b64encode, b64decode
 import cv2
 import cv2.xfeatures2d
 import gabriel_server
-import gabriel_server.cognitive_engine
+from gabriel_server import cognitive_engine as gb_cognitive_engine
 from gabriel_server import local_engine as gb_local_engine
 from gabriel_protocol import gabriel_pb2
 import logging
 import os
 import sys
-import zhuocv as zc
+import numpy as np
 
+import config
+import match
 import table
+import zhuocv as zc
 
 DEFAULT_SOURCE_NAME = '0'
 DEFAULT_SERVER_HOST = 'localhost'
@@ -24,6 +28,9 @@ def parse_source_name_server_host():
     parser.add_argument('server_host', nargs='?', default=DEFAULT_SERVER_HOST)
     return parser.parse_args()
 
+def engine_factory(image_db):
+    return lambda: ApertureServer(image_db)
+
 def main():
     image_db = table.ImageDataTable()
     logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
@@ -31,14 +38,17 @@ def main():
     args = parse_source_name_server_host()
     server_address = \
         SERVER_ADDRESS_FORMAT.format(args.server_host, ZMQ_PORT)
-    engine_factory = lambda: ApertureServer(image_db)
-    gb_local_engine.run(engine_factory, args.source_name,
+    gb_local_engine.run(engine_factory(image_db), args.source_name,
                         input_queue_maxsize=60, port=8099, num_tokens=2)
 
-class ApertureServer(gabriel_server.cognitive_engine.Engine):
+config.setup(is_streaming = True)
+display_list = config.DISPLAY_LIST
+
+class ApertureServer(gb_cognitive_engine.Engine):
     def __init__(self, image_db):
-        surf = cv2.xfeatures2d.SURF_create()
+        self.surf = cv2.xfeatures2d.SURF_create()
         self.table = image_db
+        self.matcher = match.ImageMatcher(self.table)
 
         # initialize database (if any)
         self.db_path = os.path.abspath('db/')
@@ -64,7 +74,7 @@ class ApertureServer(gabriel_server.cognitive_engine.Engine):
             # Choose betwen color hist and grayscale hist
             hist = cv2.calcHist([img], [0], None, [256], [0, 256])  # Grayscale
 
-            kp, des = surf.detectAndCompute(img, None)
+            kp, des = self.surf.detectAndCompute(img, None)
 
             # Store the keypoints, descriptors, hist, image name, and cv image
             # in the database
@@ -74,12 +84,16 @@ class ApertureServer(gabriel_server.cognitive_engine.Engine):
     def handle(self, input_frame):
         # Receive data from control VM
         logging.info("received new image")
-        header['status'] = "nothing"
         result = {}
 
+        status = gabriel_pb2.ResultWrapper.Status.SUCCESS
+
+        data = np.frombuffer(input_frame.payloads[0], dtype='uint8')
+
         # Preprocessing of input image
-        img = zc.raw2cv_image(data, gray_scale = True)
-        img_with_color = zc.raw2cv_image(data)
+        # deserialized_bytes = np.frombuffer(input_frame.payloads, dtype=np.int8)
+        img = cv2.imdecode(data, 0)
+        img_with_color = cv2.imdecode(data, -1)
         img_with_color = \
             cv2.resize(img_with_color, (config.IM_HEIGHT, config.IM_WIDTH))
         b_channel, g_channel, r_channel = cv2.split(img_with_color)
@@ -95,7 +109,6 @@ class ApertureServer(gabriel_server.cognitive_engine.Engine):
         # Send annotation data to mobile client
         if match['status'] != 'success':
             return json.dumps(result)
-        header['status'] = 'success'
         img_RGBA = cv2.resize(img_RGBA, (320, 240))
         result['annotated_img'] = b64encode(zc.cv_image2raw(img_RGBA))
         if match['key'] is not None:
@@ -111,9 +124,14 @@ class ApertureServer(gabriel_server.cognitive_engine.Engine):
         else:
             result['annotated_text'] = "No match found"
 
-        header[gabriel.Protocol_measurement.JSON_KEY_APP_SYMBOLIC_TIME] = \
-            time.time()
-        return json.dumps(result)
+        result_wrapper = gb_cognitive_engine.create_result_wrapper(status)
+
+        result = gabriel_pb2.ResultWrapper.Result()
+        result.payload_type = gabriel_pb2.PayloadType.IMAGE
+        result.payload = input_frame.payloads[0]
+        result_wrapper.results.append(result)
+
+        return result_wrapper
 
 if __name__ == '__main__':
     sys.exit(main())
