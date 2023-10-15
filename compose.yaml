@@ -11,20 +11,19 @@ services:
   server:
     build:
       context: server
-    expose:
-      - "8099"
-      - "5555"
+    ports:
+      - "8099:8099"
     healthcheck:
       test: ["CMD", "curl", "http://localhost:8099"]
       start_interval: 1s
         #stdin_open: true
         #tty: true
-  client:
-    build:
-      context: client
-    depends_on:
-      server:
-        condition: service_healthy
+        #  client:
+        #    build:
+        #      context: client
+        #    depends_on:
+        #      server:
+        #        condition: service_healthy
 
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to

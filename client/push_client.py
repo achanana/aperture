@@ -8,7 +8,10 @@ from gabriel_protocol import gabriel_pb2
 
 
 def send_frames(source):
-    capture = cv2.VideoCapture("commercial.mp4")
+    capture = cv2.VideoCapture(0)
+
+    assert(capture.isOpened())
+
     while True:
         _, frame = capture.read()
         _, jpeg_frame=cv2.imencode('.jpg', frame)

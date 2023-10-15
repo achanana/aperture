@@ -46,4 +46,6 @@ COPY . .
 # EXPOSE 8000
 
 # Run the application.
+ENV OPENCV_LOG_LEVEL=debug
+ENV OPENCV_VIDEOIO_DEBUG=1
 CMD python3 push_client.py
