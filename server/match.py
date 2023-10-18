@@ -169,7 +169,10 @@ class ImageMatcher:
             logging.debug("NOW COMPARING WITH: %s" % key)
             train_data = self.table.get_all_data(key)
             train_kp, train_des, train_hist, train_img, annotation_text, annotation_img = train_data
-            score, shift = self.compute_match_score((query_kp, query_des, query_hist, query_img), (train_kp, train_des, train_hist, train_img))
+            score, shift = \
+                self.compute_match_score(
+                    (query_kp, query_des, query_hist, query_img),
+                    (train_kp, train_des, train_hist, train_img))
             if score is not None and score > best_score:
                 best_score = score
                 best_shift = shift

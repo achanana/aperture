@@ -38,12 +38,17 @@ class ImageDataTable:
 
     def get_all_data(self, image):
         image_data = self.table[image]
-        response = (image_data.kp, image_data.des, image_data.hist, image_data.img, image_data.annotation_text, image_data.annotation_img)
+        response = (image_data.kp, image_data.des, image_data.hist,
+                    image_data.img, image_data. annotation_text,
+                    image_data.annotation_img)
         return response
 
     ## Add operations
-    def add_annotation(self, image, kp, des, hist, img, annotation_text = None, annotation_img = None):
-        data = ImageData(kp = kp, des = des, hist = hist, img = img, annotation_text = annotation_text, annotation_img = annotation_img)
+    def add_annotation(self, image, kp, des, hist, img,
+                       annotation_text = None, annotation_img = None):
+        data = ImageData(kp = kp, des = des, hist = hist, img = img,
+                         annotation_text = annotation_text,
+                         annotation_img = annotation_img)
         self.table[image] = data
 
     # TODO: Add remove annotation

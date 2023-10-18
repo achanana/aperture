@@ -65,11 +65,11 @@ class ApertureServer(gb_cognitive_engine.Engine):
                  image_filter(f)]
 
         for filename in db_filelist:
-            img = cv2.resize(cv2.imread(filename, 0),
-                             (config.IM_HEIGHT, config.IM_WIDTH))
-            annotation_img = \
-                cv2.resize(cv2.imread(filename.replace('jpeg', 'png'), -1),
-                           (config.IM_HEIGHT, config.IM_WIDTH))
+            img = cv2.imread(filename, 0)
+            img = cv2.resize(img, (config.IM_HEIGHT, config.IM_WIDTH))
+            annotation_img = cv2.imread(filename.replace('jpeg', 'png'), -1)
+            annotation_img = cv2.resize(annotation_img,
+                                        (config.IM_HEIGHT, config.IM_WIDTH))
 
             # Choose betwen color hist and grayscale hist
             hist = cv2.calcHist([img], [0], None, [256], [0, 256])  # Grayscale
@@ -109,26 +109,28 @@ class ApertureServer(gb_cognitive_engine.Engine):
         # Send annotation data to mobile client
         if match['status'] != 'success':
             return json.dumps(result)
-        img_RGBA = cv2.resize(img_RGBA, (320, 240))
-        result['annotated_img'] = b64encode(zc.cv_image2raw(img_RGBA))
+        img_RGBA = cv2.resize(img_RGBA, (config.IM_HEIGHT, config.IM_WIDTH))
+        annotation = {}
+        annotation['annotated_img'] = zc.cv_image2raw(img_RGBA)
         if match['key'] is not None:
             if match.get('annotated_text', None) is not None:
-                result['annotated_text'] = match['annotated_text']
+                annotation['annotated_text'] = match['annotated_text']
             if match.get('annotation_img', None) is not None:
                 annotation_img = match['annotation_img']
-                annotation_img = cv2.resize(annotation_img, (320, 240))
+                annotation_img = cv2.resize(annotation_img,
+                                            (config.IM_HEIGHT, config.IM_WIDTH))
                 annotated_img = \
                     cv2.addWeighted(img_RGBA, 1, annotation_img, 1, 0)
-                result['annotated_img'] = \
-                    b64encode(zc.cv_image2raw(annotated_img))
+                annotation['annotated_img'] = \
+                    zc.cv_image2raw(annotated_img)
         else:
-            result['annotated_text'] = "No match found"
+            annotation['annotated_text'] = "No match found"
 
         result_wrapper = gb_cognitive_engine.create_result_wrapper(status)
 
         result = gabriel_pb2.ResultWrapper.Result()
         result.payload_type = gabriel_pb2.PayloadType.IMAGE
-        result.payload = input_frame.payloads[0]
+        result.payload = annotation['annotated_img']
         result_wrapper.results.append(result)
 
         return result_wrapper
