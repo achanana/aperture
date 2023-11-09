@@ -18,7 +18,7 @@ import match
 import table
 import zhuocv as zc
 
-DEFAULT_SOURCE_NAME = '0'
+DEFAULT_SOURCE_NAME = 'roundtrip'
 DEFAULT_SERVER_HOST = 'localhost'
 ZMQ_PORT = 5555
 

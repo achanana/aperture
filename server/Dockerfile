@@ -54,7 +54,7 @@ WORKDIR /app
 
 RUN \
   --mount=type=cache,target=/var/cache/apt \
-  apt-get update && apt-get install -y curl
+  apt-get update && apt-get install -y curl gcc g++ python3-dev cython
 
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
@@ -100,7 +100,7 @@ COPY . .
 
 # Expose the port that the application listens on.
 EXPOSE 8000
-EXPOSE 9099
+EXPOSE 8099
 
 # Run the application.
 CMD python server.py
