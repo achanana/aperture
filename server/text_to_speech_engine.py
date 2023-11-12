@@ -1,0 +1,4 @@
+
+DEFAULT_SOURCE_NAME = 'tts'
+DEFAULT_SERVER_HOST = 'localhost'
+ZMQ_PORT = 5555

@@ -104,4 +104,4 @@ EXPOSE 8000
 EXPOSE 8099
 
 # Run the application.
-CMD python server.py
+CMD python annotation_engine.py

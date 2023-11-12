@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package client;
 
+option java_package = "edu.cmu.cs.roundtrip.protos";
+
 message AnnotationData {
   bytes frame_data = 1;
   string annotation_text = 2;

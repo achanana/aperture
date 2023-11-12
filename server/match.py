@@ -190,12 +190,12 @@ class ImageMatcher:
             response['key'] = best_fit
             annotated_text = self.table.get_annotation_text(best_fit)
             annotation_img = self.table.get_annotation_img(best_fit)
-            rows,cols = annotation_img.shape[:2]
-            M = np.float32([[1,0,best_shift[0]],[0,1,best_shift[1]]])
-            annotation_img = cv2.warpAffine(annotation_img, M, (cols, rows))
+            if annotation_img is not None:
+                rows,cols = annotation_img.shape[:2]
+                M = np.float32([[1,0,best_shift[0]],[0,1,best_shift[1]]])
+                annotation_img = cv2.warpAffine(annotation_img, M, (cols, rows))
+                response['annotation_img'] = annotation_img
             if annotated_text is not None:
                 response['annotated_text'] = annotated_text
-            if annotation_img is not None:
-                response['annotation_img'] = annotation_img
         return response
 
