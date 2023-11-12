@@ -148,7 +148,7 @@ class ImageMatcher:
     def match(self, query_img):
         response = {}
 
-        query_img = cv2.resize(query_img, (config.IM_HEIGHT, config.IM_WIDTH))
+        query_img = cv2.resize(query_img, (config.IM_WIDTH, config.IM_HEIGHT))
 
         # Calculate color hist
         query_hist = cv2.calcHist([query_img], [0], None, [256], [0, 256])

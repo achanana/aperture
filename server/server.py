@@ -12,11 +12,14 @@ import logging
 import os
 import sys
 import numpy as np
+import pyttsx3
+import json
 
 import config
 import match
 import table
 import zhuocv as zc
+from generated_proto import client_extras_pb2
 
 DEFAULT_SOURCE_NAME = 'roundtrip'
 DEFAULT_SERVER_HOST = 'localhost'
@@ -57,6 +60,39 @@ class ApertureServer(gb_cognitive_engine.Engine):
 
         self.add_images_to_table()
 
+    @staticmethod
+    def get_next_annotation_file_index():
+        '''
+        Returns the next file index to use when constructing the filename if
+        saving the annotations to the db directory.
+        '''
+        server_data_filename = 'server_data/server_data.json'
+        if os.path.exists(server_data_filename):
+            with open(server_data_filename, 'r+') as f:
+                ret = json.load(f)
+                next_file_index = ret + 1
+                f.truncate(0)
+                f.seek(0)
+                json.dump(next_file_index, f)
+        else:
+            with open(server_data_filename, 'w') as f:
+                ret = 1
+                next_file_index = ret + 1
+                json.dump(next_file_index, f)
+        next_file_index = ret
+        print(f'{next_file_index=}')
+        return next_file_index
+
+    @staticmethod
+    def get_image_histogram(img):
+        return cv2.calcHist([img], [0], None, [256], [0, 256])  # Grayscale
+
+    @staticmethod
+    def get_file_content(filename):
+        with open(filename, 'r') as file:
+            content = file.read()
+            return content
+
     def add_images_to_table(self):
         logging.info("Adding images to table")
         image_filter = lambda f : f.lower().endswith("jpeg")
@@ -66,20 +102,46 @@ class ApertureServer(gb_cognitive_engine.Engine):
 
         for filename in db_filelist:
             img = cv2.imread(filename, 0)
-            img = cv2.resize(img, (config.IM_HEIGHT, config.IM_WIDTH))
+            img = cv2.resize(img, (config.IM_WIDTH, config.IM_HEIGHT))
             annotation_img = cv2.imread(filename.replace('jpeg', 'png'), -1)
             annotation_img = cv2.resize(annotation_img,
-                                        (config.IM_HEIGHT, config.IM_WIDTH))
+                                        (config.IM_WIDTH, config.IM_HEIGHT))
+            annotation_text_filename = filename.replace('jpeg', 'txt')
+            annotation_text = self.get_file_content(annotation_text_filename)
 
-            # Choose betwen color hist and grayscale hist
-            hist = cv2.calcHist([img], [0], None, [256], [0, 256])  # Grayscale
-
+            hist = get_image_histogram(img)
             kp, des = self.surf.detectAndCompute(img, None)
 
             # Store the keypoints, descriptors, hist, image name, and cv image
             # in the database
             self.table.add_annotation(filename, kp, des, hist, img,
-                                      annotation_img = annotation_img)
+                                      annotation_text, annotation_img)
+
+    def add_new_annotation(self, annotation_data):
+        '''
+        Add a new annotation to the database if the client specifies one.
+        '''
+
+        # The frame that the annotation corresponds to.
+        annotation_image_bytes = annotation_data.frame_data
+        annotation_image_array = \
+            np.frombuffer(annotation_image_bytes, dtype=np.uint8)
+        annotation_image = \
+            cv2.imdecode(annotation_image_array, cv2.IMREAD_GRAYSCALE)
+        annotation_image = \
+            cv2.resize(annotation_image, (config.IM_WIDTH, config.IM_HEIGHT))
+
+        kp, des = self.surf.detectAndCompute(annotation_image, None)
+        hist = self.get_image_histogram(annotation_image)
+
+        # Compute filename to store annotation in.
+        annotation_index = self.get_next_annotation_file_index()
+        annotation_filename = 'annotation' + str(annotation_index)
+
+        # Add annotation to the database.
+        self.table.add_annotation(
+            annotation_filename, kp, des, hist, annotation_image,
+            annotation_data.annotation_text)
 
     def handle(self, input_frame):
         # Receive data from control VM
@@ -88,51 +150,41 @@ class ApertureServer(gb_cognitive_engine.Engine):
 
         status = gabriel_pb2.ResultWrapper.Status.SUCCESS
 
-        data = np.frombuffer(input_frame.payloads[0], dtype='uint8')
+        # If the client specifies the extras field then an annotation should
+        # be added to the database.
+        if input_frame.HasField('extras'):
+            annotation_data = client_extras_pb2.AnnotationData()
+            input_frame.extras.Unpack(annotation_data)
+            self.add_new_annotation(annotation_data)
+
+        frame_bytes = input_frame.payloads[0]
+        frame = np.frombuffer(input_frame.payloads[0], dtype=np.uint8)
 
         # Preprocessing of input image
-        # deserialized_bytes = np.frombuffer(input_frame.payloads, dtype=np.int8)
-        img = cv2.imdecode(data, 0)
-        img_with_color = cv2.imdecode(data, -1)
-        img_with_color = \
-            cv2.resize(img_with_color, (config.IM_HEIGHT, config.IM_WIDTH))
-        b_channel, g_channel, r_channel = cv2.split(img_with_color)
-        alpha_channel = np.ones(b_channel.shape, dtype = b_channel.dtype) * 50
-        img_RGBA = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))
-        zc.check_and_display(
-            'input', img, display_list, resize_max = config.DISPLAY_MAX_PIXEL,
-            wait_time = config.DISPLAY_WAIT_TIME)
+        img = cv2.imdecode(frame, cv2.IMREAD_GRAYSCALE)
 
         # Get image match
         match = self.matcher.match(img)
 
         # Send annotation data to mobile client
-        if match['status'] != 'success':
-            return json.dumps(result)
-        img_RGBA = cv2.resize(img_RGBA, (config.IM_HEIGHT, config.IM_WIDTH))
         annotation = {}
-        annotation['annotated_img'] = zc.cv_image2raw(img_RGBA)
         if match['key'] is not None:
-            if match.get('annotated_text', None) is not None:
-                annotation['annotated_text'] = match['annotated_text']
-            if match.get('annotation_img', None) is not None:
-                annotation_img = match['annotation_img']
-                annotation_img = cv2.resize(annotation_img,
-                                            (config.IM_HEIGHT, config.IM_WIDTH))
-                annotated_img = \
-                    cv2.addWeighted(img_RGBA, 1, annotation_img, 1, 0)
-                annotation['annotated_img'] = \
-                    zc.cv_image2raw(annotated_img)
+            annotated_text = match['annotated_text']
         else:
-            annotation['annotated_text'] = "No match found"
+            annotated_text = None
 
         result_wrapper = gb_cognitive_engine.create_result_wrapper(status)
 
-        result = gabriel_pb2.ResultWrapper.Result()
-        result.payload_type = gabriel_pb2.PayloadType.IMAGE
-        result.payload = annotation['annotated_img']
-        result_wrapper.results.append(result)
+        if annotated_text is not None:
+            result = gabriel_pb2.ResultWrapper.Result()
+            result.payload_type = gabriel_pb2.PayloadType.TEXT
+            result.payload = bytes(annotated_text, 'utf-8')
+            result_wrapper.results.append(result)
 
+        result = gabriel_pb2.ResultWrapper.Result()
+        result.payload_type = gabriel_pb2.PayloadType.TEXT
+        result.payload = bytes("hello back!", 'utf-8')
+        result_wrapper.results.append(result)
         return result_wrapper
 
 if __name__ == '__main__':

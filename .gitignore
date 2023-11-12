@@ -166,3 +166,6 @@ cython_debug/
 *.swp
 
 .DS_Store
+
+server/db
+server/server_data

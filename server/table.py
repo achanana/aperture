@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from collections import namedtuple
+import cv2
 
 ImageData = namedtuple('ImageData', 'kp des hist img annotation_text annotation_img')
 
@@ -45,11 +46,18 @@ class ImageDataTable:
 
     ## Add operations
     def add_annotation(self, image, kp, des, hist, img,
-                       annotation_text = None, annotation_img = None):
+                       annotation_text = None, annotation_img = None,
+                       persist_to_disk = True):
         data = ImageData(kp = kp, des = des, hist = hist, img = img,
                          annotation_text = annotation_text,
                          annotation_img = annotation_img)
+        print(f"Adding {image=} to the database")
         self.table[image] = data
+
+        if (persist_to_disk):
+            cv2.imwrite('db/' + image + '.jpg', img)
+            with open('db/' + image + '.txt', 'w') as f:
+                f.write(annotation_text)
 
     # TODO: Add remove annotation
 

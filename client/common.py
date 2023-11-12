@@ -2,7 +2,7 @@ import argparse
 import logging
 
 
-DEFAULT_SOURCE_NAME = '0'
+DEFAULT_SOURCE_NAME = 'roundtrip'
 DEFAULT_SERVER_HOST = 'localhost'
 WEBSOCKET_PORT = 8099
 ZMQ_PORT = 5555

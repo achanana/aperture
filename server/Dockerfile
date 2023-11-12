@@ -91,12 +91,13 @@ COPY --from=build /usr/local/lib \
 RUN chown appuser /app
 
 # Switch to the non-privileged user to run the application.
-USER appuser
+# USER appuser
 
 WORKDIR /app
 
 # Copy the source code into the container.
 COPY . .
+COPY ../generated_proto .
 
 # Expose the port that the application listens on.
 EXPOSE 8000
