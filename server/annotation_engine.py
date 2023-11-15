@@ -182,10 +182,6 @@ class ApertureServer(gb_cognitive_engine.Engine):
             result.payload = bytes(annotated_text, 'utf-8')
             result_wrapper.results.append(result)
 
-        result = gabriel_pb2.ResultWrapper.Result()
-        result.payload_type = gabriel_pb2.PayloadType.TEXT
-        result.payload = bytes("hello back!", 'utf-8')
-        result_wrapper.results.append(result)
         return result_wrapper
 
 if __name__ == '__main__':
