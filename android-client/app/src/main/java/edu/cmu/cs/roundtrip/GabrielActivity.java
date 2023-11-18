@@ -57,16 +57,11 @@ public class GabrielActivity extends AppCompatActivity {
     private YuvToJPEGConverter yuvToJPEGConverter;
     private CameraCapture cameraCapture;
 
-    private PreviewView previewView = null;
     private TextView textView = null;
 
     private EditText editText = null;
 
-    private Button button = null;
-
     private String typed_string = "";
-
-    private ByteString annotation_frame = null;
 
     private Instant annotation_display_start = null;
 
@@ -82,10 +77,10 @@ public class GabrielActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_gabriel);
 
-        previewView = findViewById(R.id.preview);
+        PreviewView previewView = findViewById(R.id.preview);
         textView = findViewById(R.id.textAnnotation);
         editText = findViewById(R.id.editText);
-        button = findViewById(R.id.startAnnotationButton);
+        Button button = findViewById(R.id.startAnnotationButton);
 
         prev_time = System.currentTimeMillis();
         tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
@@ -142,8 +137,14 @@ public class GabrielActivity extends AppCompatActivity {
             finish();
         };
 
+        Bundle extras = getIntent().getExtras();
+        String socket = extras.getString("server_ip");
+        String host = SocketParser.getIpAddress(socket).get();
+        String port = SocketParser.getPort(socket).get();
+        Log.i(TAG, "Connecting to server at " + host + ":" + port);
+
         serverComm = ServerComm.createServerComm(
-                consumer, BuildConfig.GABRIEL_HOST, PORT, getApplication(), onDisconnect);
+                consumer, host, Integer.parseInt(port), getApplication(), onDisconnect);
 
         yuvToJPEGConverter = new YuvToJPEGConverter(this);
         cameraCapture = new CameraCapture(this, analyzer, WIDTH, HEIGHT, previewView);
