@@ -30,8 +30,8 @@ RECOGNIZE_ONLY = False
 SAVE_IMAGE = False
 
 # Max image width and height
-IM_WIDTH = 360
-IM_HEIGHT= 640
+IM_WIDTH = 768
+IM_HEIGHT= 1024
 
 # Display
 DISPLAY_MAX_PIXEL = 400

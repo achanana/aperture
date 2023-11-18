@@ -49,7 +49,7 @@ display_list = config.DISPLAY_LIST
 
 class ApertureServer(gb_cognitive_engine.Engine):
     def __init__(self, image_db):
-        self.surf = cv2.xfeatures2d.SURF_create()
+        self.feature_extraction_algo = cv2.KAZE_create()
         self.table = image_db
         self.matcher = match.ImageMatcher(self.table)
 
@@ -110,7 +110,7 @@ class ApertureServer(gb_cognitive_engine.Engine):
             annotation_text = self.get_file_content(annotation_text_filename)
 
             hist = get_image_histogram(img)
-            kp, des = self.surf.detectAndCompute(img, None)
+            kp, des = self.feature_extraction_algo.detectAndCompute(img, None)
 
             # Store the keypoints, descriptors, hist, image name, and cv image
             # in the database
@@ -131,7 +131,7 @@ class ApertureServer(gb_cognitive_engine.Engine):
         annotation_image = \
             cv2.resize(annotation_image, (config.IM_WIDTH, config.IM_HEIGHT))
 
-        kp, des = self.surf.detectAndCompute(annotation_image, None)
+        kp, des = self.feature_extraction_algo.detectAndCompute(annotation_image, None)
         hist = self.get_image_histogram(annotation_image)
 
         # Compute filename to store annotation in.

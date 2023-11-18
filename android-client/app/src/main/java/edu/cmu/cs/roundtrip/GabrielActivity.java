@@ -50,8 +50,8 @@ public class GabrielActivity extends AppCompatActivity {
     private static final String TAG = "GabrielActivity";
     private static final String SOURCE = "roundtrip";
     private static final int PORT = 8099;
-    private static final int WIDTH = 640;
-    private static final int HEIGHT = 480;
+    private static final int WIDTH = 768;
+    private static final int HEIGHT = 1024;
 
     private ServerComm serverComm;
     private YuvToJPEGConverter yuvToJPEGConverter;

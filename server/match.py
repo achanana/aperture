@@ -17,7 +17,7 @@ import zhuocv as zc
 class ImageMatcher:
     def __init__(self, table):
         # Initialize SURF feature detector, FLANN matcher, and image database
-        self.surf = cv2.xfeatures2d.SURF_create()
+        self.surf = cv2.KAZE_create()
         self.flann = cv2.FlannBasedMatcher(config.INDEX_PARAMS, config.SEARCH_PARAMS)
         self.table = table
 
