@@ -3,7 +3,7 @@
 import argparse
 from base64 import b64encode, b64decode
 import cv2
-import cv2.xfeatures2d
+# import cv2.xfeatures2d
 import gabriel_server
 from gabriel_server import cognitive_engine as gb_cognitive_engine
 from gabriel_server import local_engine as gb_local_engine

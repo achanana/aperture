@@ -6,6 +6,7 @@ import os
 from scipy import stats
 import sys
 import time
+from threading import Thread, Lock
 
 import config
 import table
@@ -20,6 +21,20 @@ class ImageMatcher:
         self.surf = cv2.KAZE_create()
         self.flann = cv2.FlannBasedMatcher(config.INDEX_PARAMS, config.SEARCH_PARAMS)
         self.table = table
+        self.current_frame = np.zeros((100,100,1))
+        self.current_frame_lock = Lock()
+
+        Thread(target=self.display_match_loop, args=()).start()
+
+    def display_match_loop(self):
+        while True:
+            match = None
+            with self.current_frame_lock:
+                match = self.current_frame
+            cv2.imshow("Match", match)
+            k = cv2.waitKey(1) & 0xFF
+            if k == ord('q'):
+                return
 
     # Finds the median bin of a histogram
     def hist_median(self, hist):
@@ -108,7 +123,7 @@ class ImageMatcher:
 
         # Reject match if number of detected matches is less than the threshold
         if len(matches) < threshold:
-            return None, None
+            return None, None, None
         else:
             score += len(matches)
 
@@ -140,12 +155,20 @@ class ImageMatcher:
         if hist_test_passes >= 2:
             score += hist_correlation + dct_correl + hist_mwn
         else:
-            return None, None
+            return None, None, None
 
         logging.debug("SCORE IS {0}".format(score))
-        return score, (shift_x, shift_y)
+        return score, (shift_x, shift_y), matches
 
-    def match(self, query_img):
+    def display_match(self, query_img, query_kp, train_img, train_kp, best_matches):
+        match_img = \
+            cv2.drawMatches(
+                query_img, query_kp, train_img, train_kp, best_matches, None,
+                flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+        with self.current_frame_lock:
+            self.current_frame = match_img
+
+    def match(self, query_img, display_match = True):
         response = {}
 
         query_img = cv2.resize(query_img, (config.IM_WIDTH, config.IM_HEIGHT))
@@ -165,11 +188,12 @@ class ImageMatcher:
         best_fit = None
         best_score = 0
         best_shift = None
+        best_matches = None
         for key in self.table.get_keys():
             logging.debug("NOW COMPARING WITH: %s" % key)
             train_data = self.table.get_all_data(key)
             train_kp, train_des, train_hist, train_img, annotation_text, annotation_img = train_data
-            score, shift = \
+            score, shift, matches = \
                 self.compute_match_score(
                     (query_kp, query_des, query_hist, query_img),
                     (train_kp, train_des, train_hist, train_img))
@@ -177,6 +201,7 @@ class ImageMatcher:
                 best_score = score
                 best_shift = shift
                 best_fit = key
+                best_matches = matches
 
         response = {'status' : 'success'}
 
@@ -186,6 +211,11 @@ class ImageMatcher:
             logging.debug("BEST FIT IS: {0}".format(best_fit))
             response['key'] = None
         else:
+            if display_match:
+                train_data = self.table.get_all_data(best_fit)
+                train_kp, _, _, train_img, _, _ = train_data
+                self.display_match(query_img, query_kp, train_img, train_kp, best_matches)
+
             logging.info("BEST FIT IS: {0}".format(best_fit))
             response['key'] = best_fit
             annotated_text = self.table.get_annotation_text(best_fit)
