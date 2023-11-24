@@ -9,7 +9,7 @@ message Location {
   double longitude = 2;
 }
 
-message AnnotationData {
-  string annotation_text = 1;
-  Location annotation_location = 2;
+message Extras {
+  Location current_location = 1;
+  optional string annotation_text = 2;
 }

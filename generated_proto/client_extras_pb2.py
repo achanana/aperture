@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13\x63lient_extras.proto\x12\x06\x63lient\"/\n\x08Location\x12\x10\n\x08latitude\x18\x01 \x01(\x01\x12\x11\n\tlongitude\x18\x02 \x01(\x01\"X\n\x0e\x41nnotationData\x12\x17\n\x0f\x61nnotation_text\x18\x01 \x01(\t\x12-\n\x13\x61nnotation_location\x18\x02 \x01(\x0b\x32\x10.client.LocationB\x1d\n\x1b\x65\x64u.cmu.cs.roundtrip.protosb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13\x63lient_extras.proto\x12\x06\x63lient\"/\n\x08Location\x12\x10\n\x08latitude\x18\x01 \x01(\x01\x12\x11\n\tlongitude\x18\x02 \x01(\x01\"f\n\x06\x45xtras\x12*\n\x10\x63urrent_location\x18\x01 \x01(\x0b\x32\x10.client.Location\x12\x1c\n\x0f\x61nnotation_text\x18\x02 \x01(\tH\x00\x88\x01\x01\x42\x12\n\x10_annotation_textB\x1d\n\x1b\x65\x64u.cmu.cs.roundtrip.protosb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -24,6 +24,6 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _globals['DESCRIPTOR']._serialized_options = b'\n\033edu.cmu.cs.roundtrip.protos'
   _globals['_LOCATION']._serialized_start=31
   _globals['_LOCATION']._serialized_end=78
-  _globals['_ANNOTATIONDATA']._serialized_start=80
-  _globals['_ANNOTATIONDATA']._serialized_end=168
+  _globals['_EXTRAS']._serialized_start=80
+  _globals['_EXTRAS']._serialized_end=182
 # @@protoc_insertion_point(module_scope)

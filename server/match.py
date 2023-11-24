@@ -7,6 +7,7 @@ from scipy import stats
 import sys
 import time
 from threading import Thread, Lock
+from geopy import distance
 
 import config
 import table
@@ -168,7 +169,11 @@ class ImageMatcher:
         with self.current_frame_lock:
             self.current_frame = match_img
 
-    def match(self, query_img, display_match = True):
+    @staticmethod
+    def coordinates_in_proximity(coord1, coord2, thresh_meters):
+        return distance.distance(coord1, coord2).meters < thresh_meters
+
+    def match(self, query_img, query_coords, display_match = True):
         response = {}
 
         query_img = cv2.resize(query_img, (config.IM_WIDTH, config.IM_HEIGHT))
@@ -176,7 +181,7 @@ class ImageMatcher:
         # Calculate color hist
         query_hist = cv2.calcHist([query_img], [0], None, [256], [0, 256])
 
-        # Extract image features with SIFT
+        # Extract image features
         query_kp, query_des = self.surf.detectAndCompute(query_img, None)
 
         if len(query_kp) is None:
@@ -189,14 +194,23 @@ class ImageMatcher:
         best_score = 0
         best_shift = None
         best_matches = None
+
+        logging.info(f"Finding best match for location {query_coords=}")
         for key in self.table.get_keys():
             logging.debug("NOW COMPARING WITH: %s" % key)
+
             train_data = self.table.get_all_data(key)
-            train_kp, train_des, train_hist, train_img, annotation_text, annotation_img = train_data
+            train_coords = (train_data.latitude, train_data.longitude)
+
+            if not self.coordinates_in_proximity(train_coords, query_coords, 50):
+                logging.info(f"Skip matching against {key=} because it is not "
+                             "in proximity of query coords")
+                continue
+
             score, shift, matches = \
                 self.compute_match_score(
                     (query_kp, query_des, query_hist, query_img),
-                    (train_kp, train_des, train_hist, train_img))
+                    (train_data.kp, train_data.des, train_data.hist, train_data.img))
             if score is not None and score > best_score:
                 best_score = score
                 best_shift = shift
@@ -213,19 +227,11 @@ class ImageMatcher:
         else:
             if display_match:
                 train_data = self.table.get_all_data(best_fit)
-                train_kp, _, _, train_img, _, _ = train_data
-                self.display_match(query_img, query_kp, train_img, train_kp, best_matches)
+                self.display_match(query_img, query_kp, train_data.img, train_data.kp, best_matches)
 
             logging.info("BEST FIT IS: {0}".format(best_fit))
             response['key'] = best_fit
             annotated_text = self.table.get_annotation_text(best_fit)
-            annotation_img = self.table.get_annotation_img(best_fit)
-            if annotation_img is not None:
-                rows,cols = annotation_img.shape[:2]
-                M = np.float32([[1,0,best_shift[0]],[0,1,best_shift[1]]])
-                annotation_img = cv2.warpAffine(annotation_img, M, (cols, rows))
-                response['annotation_img'] = annotation_img
             if annotated_text is not None:
                 response['annotated_text'] = annotated_text
         return response
-

@@ -3,7 +3,7 @@
 from collections import namedtuple
 import cv2
 
-ImageData = namedtuple('ImageData', 'kp des hist img annotation_text annotation_img')
+ImageData = namedtuple('ImageData', 'kp des hist img annotation_text latitude longitude')
 
 # TODO: Add in exception handling!
 class ImageDataTable:
@@ -16,10 +16,6 @@ class ImageDataTable:
     ## Get operations
     def get_annotation_text(self, image):
         response = self.table[image].annotation_text
-        return response
-
-    def get_annotation_img(self, image):
-        response = self.table[image].annotation_img
         return response
 
     def get_keypoints(self, image):
@@ -38,26 +34,29 @@ class ImageDataTable:
         return self.table[image].img
 
     def get_all_data(self, image):
-        image_data = self.table[image]
-        response = (image_data.kp, image_data.des, image_data.hist,
-                    image_data.img, image_data. annotation_text,
-                    image_data.annotation_img)
-        return response
+        return self.table[image]
 
     ## Add operations
-    def add_annotation(self, image, kp, des, hist, img,
-                       annotation_text = None, annotation_img = None,
+    def add_annotation(self, key, kp, des, hist, img,
+                       annotation_text,
+                       latitude = 0,
+                       longitude = 0,
                        persist_to_disk = True):
         data = ImageData(kp = kp, des = des, hist = hist, img = img,
                          annotation_text = annotation_text,
-                         annotation_img = annotation_img)
-        print(f"Adding {image=} to the database")
-        self.table[image] = data
+                         latitude = latitude, longitude = longitude)
+        print(f"Adding {key=} to the database, "
+              f"{annotation_text=} {latitude=} {longitude=}")
+        self.table[key] = data
 
         if (persist_to_disk):
-            cv2.imwrite('db/' + image + '.jpg', img)
-            with open('db/' + image + '.txt', 'w') as f:
+            cv2.imwrite('db/' + key + '.jpg', img)
+            with open('db/' + key + '.txt', 'w') as f:
                 f.write(annotation_text)
+                f.write('\n')
+                f.write(str(latitude))
+                f.write('\n')
+                f.write(str(longitude))
 
     # TODO: Add remove annotation
 

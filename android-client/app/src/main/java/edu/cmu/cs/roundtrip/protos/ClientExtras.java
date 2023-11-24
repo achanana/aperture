@@ -316,49 +316,108 @@ public final class ClientExtras {
     }
   }
 
-  public interface AnnotationDataOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:client.AnnotationData)
+  public interface ExtrasOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:client.Extras)
       com.google.protobuf.MessageLiteOrBuilder {
 
     /**
-     * <code>string annotation_text = 1;</code>
+     * <code>.client.Location current_location = 1;</code>
+     * @return Whether the currentLocation field is set.
+     */
+    boolean hasCurrentLocation();
+    /**
+     * <code>.client.Location current_location = 1;</code>
+     * @return The currentLocation.
+     */
+    edu.cmu.cs.roundtrip.protos.ClientExtras.Location getCurrentLocation();
+
+    /**
+     * <code>optional string annotation_text = 2;</code>
+     * @return Whether the annotationText field is set.
+     */
+    boolean hasAnnotationText();
+    /**
+     * <code>optional string annotation_text = 2;</code>
      * @return The annotationText.
      */
     java.lang.String getAnnotationText();
     /**
-     * <code>string annotation_text = 1;</code>
+     * <code>optional string annotation_text = 2;</code>
      * @return The bytes for annotationText.
      */
     com.google.protobuf.ByteString
         getAnnotationTextBytes();
-
-    /**
-     * <code>.client.Location annotation_location = 2;</code>
-     * @return Whether the annotationLocation field is set.
-     */
-    boolean hasAnnotationLocation();
-    /**
-     * <code>.client.Location annotation_location = 2;</code>
-     * @return The annotationLocation.
-     */
-    edu.cmu.cs.roundtrip.protos.ClientExtras.Location getAnnotationLocation();
   }
   /**
-   * Protobuf type {@code client.AnnotationData}
+   * Protobuf type {@code client.Extras}
    */
-  public  static final class AnnotationData extends
+  public  static final class Extras extends
       com.google.protobuf.GeneratedMessageLite<
-          AnnotationData, AnnotationData.Builder> implements
-      // @@protoc_insertion_point(message_implements:client.AnnotationData)
-      AnnotationDataOrBuilder {
-    private AnnotationData() {
+          Extras, Extras.Builder> implements
+      // @@protoc_insertion_point(message_implements:client.Extras)
+      ExtrasOrBuilder {
+    private Extras() {
       annotationText_ = "";
     }
     private int bitField0_;
-    public static final int ANNOTATION_TEXT_FIELD_NUMBER = 1;
+    public static final int CURRENT_LOCATION_FIELD_NUMBER = 1;
+    private edu.cmu.cs.roundtrip.protos.ClientExtras.Location currentLocation_;
+    /**
+     * <code>.client.Location current_location = 1;</code>
+     */
+    @java.lang.Override
+    public boolean hasCurrentLocation() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.client.Location current_location = 1;</code>
+     */
+    @java.lang.Override
+    public edu.cmu.cs.roundtrip.protos.ClientExtras.Location getCurrentLocation() {
+      return currentLocation_ == null ? edu.cmu.cs.roundtrip.protos.ClientExtras.Location.getDefaultInstance() : currentLocation_;
+    }
+    /**
+     * <code>.client.Location current_location = 1;</code>
+     */
+    private void setCurrentLocation(edu.cmu.cs.roundtrip.protos.ClientExtras.Location value) {
+      value.getClass();
+  currentLocation_ = value;
+      bitField0_ |= 0x00000001;
+      }
+    /**
+     * <code>.client.Location current_location = 1;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeCurrentLocation(edu.cmu.cs.roundtrip.protos.ClientExtras.Location value) {
+      value.getClass();
+  if (currentLocation_ != null &&
+          currentLocation_ != edu.cmu.cs.roundtrip.protos.ClientExtras.Location.getDefaultInstance()) {
+        currentLocation_ =
+          edu.cmu.cs.roundtrip.protos.ClientExtras.Location.newBuilder(currentLocation_).mergeFrom(value).buildPartial();
+      } else {
+        currentLocation_ = value;
+      }
+      bitField0_ |= 0x00000001;
+    }
+    /**
+     * <code>.client.Location current_location = 1;</code>
+     */
+    private void clearCurrentLocation() {  currentLocation_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
+    }
+
+    public static final int ANNOTATION_TEXT_FIELD_NUMBER = 2;
     private java.lang.String annotationText_;
     /**
-     * <code>string annotation_text = 1;</code>
+     * <code>optional string annotation_text = 2;</code>
+     * @return Whether the annotationText field is set.
+     */
+    @java.lang.Override
+    public boolean hasAnnotationText() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>optional string annotation_text = 2;</code>
      * @return The annotationText.
      */
     @java.lang.Override
@@ -366,7 +425,7 @@ public final class ClientExtras {
       return annotationText_;
     }
     /**
-     * <code>string annotation_text = 1;</code>
+     * <code>optional string annotation_text = 2;</code>
      * @return The bytes for annotationText.
      */
     @java.lang.Override
@@ -375,123 +434,77 @@ public final class ClientExtras {
       return com.google.protobuf.ByteString.copyFromUtf8(annotationText_);
     }
     /**
-     * <code>string annotation_text = 1;</code>
+     * <code>optional string annotation_text = 2;</code>
      * @param value The annotationText to set.
      */
     private void setAnnotationText(
         java.lang.String value) {
       java.lang.Class<?> valueClass = value.getClass();
-  
+  bitField0_ |= 0x00000002;
       annotationText_ = value;
     }
     /**
-     * <code>string annotation_text = 1;</code>
+     * <code>optional string annotation_text = 2;</code>
      */
     private void clearAnnotationText() {
-
+      bitField0_ = (bitField0_ & ~0x00000002);
       annotationText_ = getDefaultInstance().getAnnotationText();
     }
     /**
-     * <code>string annotation_text = 1;</code>
+     * <code>optional string annotation_text = 2;</code>
      * @param value The bytes for annotationText to set.
      */
     private void setAnnotationTextBytes(
         com.google.protobuf.ByteString value) {
       checkByteStringIsUtf8(value);
       annotationText_ = value.toStringUtf8();
-
+      bitField0_ |= 0x00000002;
     }
 
-    public static final int ANNOTATION_LOCATION_FIELD_NUMBER = 2;
-    private edu.cmu.cs.roundtrip.protos.ClientExtras.Location annotationLocation_;
-    /**
-     * <code>.client.Location annotation_location = 2;</code>
-     */
-    @java.lang.Override
-    public boolean hasAnnotationLocation() {
-      return ((bitField0_ & 0x00000001) != 0);
-    }
-    /**
-     * <code>.client.Location annotation_location = 2;</code>
-     */
-    @java.lang.Override
-    public edu.cmu.cs.roundtrip.protos.ClientExtras.Location getAnnotationLocation() {
-      return annotationLocation_ == null ? edu.cmu.cs.roundtrip.protos.ClientExtras.Location.getDefaultInstance() : annotationLocation_;
-    }
-    /**
-     * <code>.client.Location annotation_location = 2;</code>
-     */
-    private void setAnnotationLocation(edu.cmu.cs.roundtrip.protos.ClientExtras.Location value) {
-      value.getClass();
-  annotationLocation_ = value;
-      bitField0_ |= 0x00000001;
-      }
-    /**
-     * <code>.client.Location annotation_location = 2;</code>
-     */
-    @java.lang.SuppressWarnings({"ReferenceEquality"})
-    private void mergeAnnotationLocation(edu.cmu.cs.roundtrip.protos.ClientExtras.Location value) {
-      value.getClass();
-  if (annotationLocation_ != null &&
-          annotationLocation_ != edu.cmu.cs.roundtrip.protos.ClientExtras.Location.getDefaultInstance()) {
-        annotationLocation_ =
-          edu.cmu.cs.roundtrip.protos.ClientExtras.Location.newBuilder(annotationLocation_).mergeFrom(value).buildPartial();
-      } else {
-        annotationLocation_ = value;
-      }
-      bitField0_ |= 0x00000001;
-    }
-    /**
-     * <code>.client.Location annotation_location = 2;</code>
-     */
-    private void clearAnnotationLocation() {  annotationLocation_ = null;
-      bitField0_ = (bitField0_ & ~0x00000001);
-    }
-
-    public static edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData parseFrom(
+    public static edu.cmu.cs.roundtrip.protos.ClientExtras.Extras parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData parseFrom(
+    public static edu.cmu.cs.roundtrip.protos.ClientExtras.Extras parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData parseFrom(
+    public static edu.cmu.cs.roundtrip.protos.ClientExtras.Extras parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData parseFrom(
+    public static edu.cmu.cs.roundtrip.protos.ClientExtras.Extras parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData parseFrom(byte[] data)
+    public static edu.cmu.cs.roundtrip.protos.ClientExtras.Extras parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData parseFrom(
+    public static edu.cmu.cs.roundtrip.protos.ClientExtras.Extras parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData parseFrom(java.io.InputStream input)
+    public static edu.cmu.cs.roundtrip.protos.ClientExtras.Extras parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData parseFrom(
+    public static edu.cmu.cs.roundtrip.protos.ClientExtras.Extras parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -499,24 +512,24 @@ public final class ClientExtras {
           DEFAULT_INSTANCE, input, extensionRegistry);
     }
 
-    public static edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData parseDelimitedFrom(java.io.InputStream input)
+    public static edu.cmu.cs.roundtrip.protos.ClientExtras.Extras parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input);
     }
 
-    public static edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData parseDelimitedFrom(
+    public static edu.cmu.cs.roundtrip.protos.ClientExtras.Extras parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData parseFrom(
+    public static edu.cmu.cs.roundtrip.protos.ClientExtras.Extras parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData parseFrom(
+    public static edu.cmu.cs.roundtrip.protos.ClientExtras.Extras parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -527,26 +540,81 @@ public final class ClientExtras {
     public static Builder newBuilder() {
       return (Builder) DEFAULT_INSTANCE.createBuilder();
     }
-    public static Builder newBuilder(edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData prototype) {
+    public static Builder newBuilder(edu.cmu.cs.roundtrip.protos.ClientExtras.Extras prototype) {
       return DEFAULT_INSTANCE.createBuilder(prototype);
     }
 
     /**
-     * Protobuf type {@code client.AnnotationData}
+     * Protobuf type {@code client.Extras}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageLite.Builder<
-          edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData, Builder> implements
-        // @@protoc_insertion_point(builder_implements:client.AnnotationData)
-        edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationDataOrBuilder {
-      // Construct using edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData.newBuilder()
+          edu.cmu.cs.roundtrip.protos.ClientExtras.Extras, Builder> implements
+        // @@protoc_insertion_point(builder_implements:client.Extras)
+        edu.cmu.cs.roundtrip.protos.ClientExtras.ExtrasOrBuilder {
+      // Construct using edu.cmu.cs.roundtrip.protos.ClientExtras.Extras.newBuilder()
       private Builder() {
         super(DEFAULT_INSTANCE);
       }
 
 
       /**
-       * <code>string annotation_text = 1;</code>
+       * <code>.client.Location current_location = 1;</code>
+       */
+      @java.lang.Override
+      public boolean hasCurrentLocation() {
+        return instance.hasCurrentLocation();
+      }
+      /**
+       * <code>.client.Location current_location = 1;</code>
+       */
+      @java.lang.Override
+      public edu.cmu.cs.roundtrip.protos.ClientExtras.Location getCurrentLocation() {
+        return instance.getCurrentLocation();
+      }
+      /**
+       * <code>.client.Location current_location = 1;</code>
+       */
+      public Builder setCurrentLocation(edu.cmu.cs.roundtrip.protos.ClientExtras.Location value) {
+        copyOnWrite();
+        instance.setCurrentLocation(value);
+        return this;
+        }
+      /**
+       * <code>.client.Location current_location = 1;</code>
+       */
+      public Builder setCurrentLocation(
+          edu.cmu.cs.roundtrip.protos.ClientExtras.Location.Builder builderForValue) {
+        copyOnWrite();
+        instance.setCurrentLocation(builderForValue.build());
+        return this;
+      }
+      /**
+       * <code>.client.Location current_location = 1;</code>
+       */
+      public Builder mergeCurrentLocation(edu.cmu.cs.roundtrip.protos.ClientExtras.Location value) {
+        copyOnWrite();
+        instance.mergeCurrentLocation(value);
+        return this;
+      }
+      /**
+       * <code>.client.Location current_location = 1;</code>
+       */
+      public Builder clearCurrentLocation() {  copyOnWrite();
+        instance.clearCurrentLocation();
+        return this;
+      }
+
+      /**
+       * <code>optional string annotation_text = 2;</code>
+       * @return Whether the annotationText field is set.
+       */
+      @java.lang.Override
+      public boolean hasAnnotationText() {
+        return instance.hasAnnotationText();
+      }
+      /**
+       * <code>optional string annotation_text = 2;</code>
        * @return The annotationText.
        */
       @java.lang.Override
@@ -554,7 +622,7 @@ public final class ClientExtras {
         return instance.getAnnotationText();
       }
       /**
-       * <code>string annotation_text = 1;</code>
+       * <code>optional string annotation_text = 2;</code>
        * @return The bytes for annotationText.
        */
       @java.lang.Override
@@ -563,7 +631,7 @@ public final class ClientExtras {
         return instance.getAnnotationTextBytes();
       }
       /**
-       * <code>string annotation_text = 1;</code>
+       * <code>optional string annotation_text = 2;</code>
        * @param value The annotationText to set.
        * @return This builder for chaining.
        */
@@ -574,7 +642,7 @@ public final class ClientExtras {
         return this;
       }
       /**
-       * <code>string annotation_text = 1;</code>
+       * <code>optional string annotation_text = 2;</code>
        * @return This builder for chaining.
        */
       public Builder clearAnnotationText() {
@@ -583,7 +651,7 @@ public final class ClientExtras {
         return this;
       }
       /**
-       * <code>string annotation_text = 1;</code>
+       * <code>optional string annotation_text = 2;</code>
        * @param value The bytes for annotationText to set.
        * @return This builder for chaining.
        */
@@ -594,54 +662,7 @@ public final class ClientExtras {
         return this;
       }
 
-      /**
-       * <code>.client.Location annotation_location = 2;</code>
-       */
-      @java.lang.Override
-      public boolean hasAnnotationLocation() {
-        return instance.hasAnnotationLocation();
-      }
-      /**
-       * <code>.client.Location annotation_location = 2;</code>
-       */
-      @java.lang.Override
-      public edu.cmu.cs.roundtrip.protos.ClientExtras.Location getAnnotationLocation() {
-        return instance.getAnnotationLocation();
-      }
-      /**
-       * <code>.client.Location annotation_location = 2;</code>
-       */
-      public Builder setAnnotationLocation(edu.cmu.cs.roundtrip.protos.ClientExtras.Location value) {
-        copyOnWrite();
-        instance.setAnnotationLocation(value);
-        return this;
-        }
-      /**
-       * <code>.client.Location annotation_location = 2;</code>
-       */
-      public Builder setAnnotationLocation(
-          edu.cmu.cs.roundtrip.protos.ClientExtras.Location.Builder builderForValue) {
-        copyOnWrite();
-        instance.setAnnotationLocation(builderForValue.build());
-        return this;
-      }
-      /**
-       * <code>.client.Location annotation_location = 2;</code>
-       */
-      public Builder mergeAnnotationLocation(edu.cmu.cs.roundtrip.protos.ClientExtras.Location value) {
-        copyOnWrite();
-        instance.mergeAnnotationLocation(value);
-        return this;
-      }
-      /**
-       * <code>.client.Location annotation_location = 2;</code>
-       */
-      public Builder clearAnnotationLocation() {  copyOnWrite();
-        instance.clearAnnotationLocation();
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:client.AnnotationData)
+      // @@protoc_insertion_point(builder_scope:client.Extras)
     }
     @java.lang.Override
     @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
@@ -650,7 +671,7 @@ public final class ClientExtras {
         java.lang.Object arg0, java.lang.Object arg1) {
       switch (method) {
         case NEW_MUTABLE_INSTANCE: {
-          return new edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData();
+          return new edu.cmu.cs.roundtrip.protos.ClientExtras.Extras();
         }
         case NEW_BUILDER: {
           return new Builder();
@@ -658,12 +679,12 @@ public final class ClientExtras {
         case BUILD_MESSAGE_INFO: {
             java.lang.Object[] objects = new java.lang.Object[] {
               "bitField0_",
+              "currentLocation_",
               "annotationText_",
-              "annotationLocation_",
             };
             java.lang.String info =
-                "\u0000\u0002\u0000\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0001\u0208\u0002\u1009" +
-                "\u0000";
+                "\u0000\u0002\u0000\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0001\u1009\u0000\u0002" +
+                "\u1208\u0001";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -671,13 +692,13 @@ public final class ClientExtras {
           return DEFAULT_INSTANCE;
         }
         case GET_PARSER: {
-          com.google.protobuf.Parser<edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData> parser = PARSER;
+          com.google.protobuf.Parser<edu.cmu.cs.roundtrip.protos.ClientExtras.Extras> parser = PARSER;
           if (parser == null) {
-            synchronized (edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData.class) {
+            synchronized (edu.cmu.cs.roundtrip.protos.ClientExtras.Extras.class) {
               parser = PARSER;
               if (parser == null) {
                 parser =
-                    new DefaultInstanceBasedParser<edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData>(
+                    new DefaultInstanceBasedParser<edu.cmu.cs.roundtrip.protos.ClientExtras.Extras>(
                         DEFAULT_INSTANCE);
                 PARSER = parser;
               }
@@ -696,24 +717,24 @@ public final class ClientExtras {
     }
 
 
-    // @@protoc_insertion_point(class_scope:client.AnnotationData)
-    private static final edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData DEFAULT_INSTANCE;
+    // @@protoc_insertion_point(class_scope:client.Extras)
+    private static final edu.cmu.cs.roundtrip.protos.ClientExtras.Extras DEFAULT_INSTANCE;
     static {
-      AnnotationData defaultInstance = new AnnotationData();
+      Extras defaultInstance = new Extras();
       // New instances are implicitly immutable so no need to make
       // immutable.
       DEFAULT_INSTANCE = defaultInstance;
       com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
-        AnnotationData.class, defaultInstance);
+        Extras.class, defaultInstance);
     }
 
-    public static edu.cmu.cs.roundtrip.protos.ClientExtras.AnnotationData getDefaultInstance() {
+    public static edu.cmu.cs.roundtrip.protos.ClientExtras.Extras getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
-    private static volatile com.google.protobuf.Parser<AnnotationData> PARSER;
+    private static volatile com.google.protobuf.Parser<Extras> PARSER;
 
-    public static com.google.protobuf.Parser<AnnotationData> parser() {
+    public static com.google.protobuf.Parser<Extras> parser() {
       return DEFAULT_INSTANCE.getParserForType();
     }
   }

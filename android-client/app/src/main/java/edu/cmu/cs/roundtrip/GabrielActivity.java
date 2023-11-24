@@ -1,6 +1,7 @@
 package edu.cmu.cs.roundtrip;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -47,6 +48,7 @@ public class GabrielActivity extends AppCompatActivity {
     private static final int PORT = 8099;
     private static final int WIDTH = 768;
     private static final int HEIGHT = 1024;
+    private static final int PERMISSION_REQUEST_LOCATION = 0;
 
     private ServerComm serverComm;
     private YuvToJPEGConverter yuvToJPEGConverter;
@@ -66,9 +68,32 @@ public class GabrielActivity extends AppCompatActivity {
 
     private String prev_spoken = "";
 
+    private LocationManager locationManager;
+
+    private LocationListener listener;
+
 
     private double currLatitude = 0;
     private double currLongitude = 0;
+
+    @SuppressLint("MissingPermission")
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_LOCATION) {
+            Log.i(TAG, "Adding location listener after requesting permission");
+            if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                        10000,          // 10-second interval.
+                        0,                      // 10 meters.
+                        listener);
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                        0,          // 10-second interval.
+                        0,                      // 10 meters.
+                        listener);
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -154,8 +179,6 @@ public class GabrielActivity extends AppCompatActivity {
             public void onClick(View view) {
                 typed_string = editText.getText().toString();
                 editText.getText().clear();
-
-                textView.setText("currLatitude: "+(int)currLatitude+ "currLongitude: "+(int)currLongitude);
             }
         });
         editText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -180,14 +203,15 @@ public class GabrielActivity extends AppCompatActivity {
         // This verification should be done during onStart() because the system calls
         // this method when the user returns to the activity, which ensures the desired
         // location provider is enabled each time the activity resumes from the stopped state.
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         final boolean locEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
-        LocationListener listener = new LocationListener() {
+        listener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 currLatitude = location.getLatitude();
                 currLongitude = location.getLongitude();
+                textView.setText("currLatitude: "+(int)currLatitude+ "currLongitude: "+(int)currLongitude);
             }
 
             @Override
@@ -207,22 +231,31 @@ public class GabrielActivity extends AppCompatActivity {
         };
 
 
-        if (!locEnabled) {
-            // Build an alert dialog here that requests that the user enable
-            // the location services, then when the user clicks the "OK" button,
-            // call enableLocationSettings()
-            enableLocationSettings();
-        } else {
+//        if (!locEnabled) {
+//            // Build an alert dialog here that requests that the user enable
+//            // the location services, then when the user clicks the "OK" button,
+//            // call enableLocationSettings()
+//            enableLocationSettings();
+//        }
 
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
-                    PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission
-                    (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // Seems IDE requires to add this check, but we've taken care of this
-                return;
-            }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission
+                (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.i(TAG, "Requesting permissions for location");
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION},
+                    PERMISSION_REQUEST_LOCATION
+            );
+        } else {
+            Log.i(TAG, "Adding location listener");
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                    10000,          // 10-second interval.
-                    0,             // 10 meters.
+                    0,          // 10-second interval.
+                    0,                      // 10 meters.
+                    listener);
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                    0,          // 10-second interval.
+                    0,                      // 10 meters.
                     listener);
         }
     }
@@ -231,36 +264,37 @@ public class GabrielActivity extends AppCompatActivity {
         Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
         startActivity(settingsIntent);
     }
+
     final private ImageAnalysis.Analyzer analyzer = new ImageAnalysis.Analyzer() {
         @Override
         public void analyze(@NonNull ImageProxy image) {
             serverComm.sendSupplier(() -> {
                 ByteString jpegByteString = yuvToJPEGConverter.convert(image);
 
-                Protos.InputFrame.Builder builder = InputFrame.newBuilder()
+                Protos.InputFrame.Builder inputFrameBuilder = InputFrame.newBuilder()
                         .setPayloadType(PayloadType.IMAGE)
                         .addPayloads(jpegByteString);
 
+                ClientExtras.Location currentLocation =
+                        ClientExtras.Location.newBuilder()
+                                .setLatitude(currLatitude)
+                                .setLongitude(currLongitude)
+                                .build();
+                ClientExtras.Extras.Builder extrasBuilder =
+                        ClientExtras.Extras.newBuilder()
+                                .setCurrentLocation(currentLocation);
                 if (!typed_string.isEmpty()) {
-                    // TODO: Send currLatitude and currLongitude to server
-                    ClientExtras.Location location =
-                            ClientExtras.Location.newBuilder()
-                                    .setLatitude(currLatitude)
-                                    .setLongitude(currLongitude)
-                                    .build();
-                    ClientExtras.AnnotationData annotationData =
-                            ClientExtras.AnnotationData.newBuilder()
-                                    .setAnnotationText(typed_string)
-                                    .setAnnotationLocation(location)
-                                    .build();
-                    Any any = Any.newBuilder()
-                            .setValue(annotationData.toByteString())
-                            .setTypeUrl("type.googleapis.com/client.AnnotationData")
-                            .build();
-                    builder.setExtras(any);
+                    extrasBuilder.setAnnotationText(typed_string);
                     typed_string = "";
                 }
-                return builder.build();
+                ClientExtras.Extras extras = extrasBuilder.build();
+                Log.i(TAG, "Latitude: " + Double.toString(extras.getCurrentLocation().getLatitude()));
+                Any any = Any.newBuilder()
+                        .setValue(extras.toByteString())
+                        .setTypeUrl("type.googleapis.com/client.Extras")
+                        .build();
+                inputFrameBuilder.setExtras(any);
+                return inputFrameBuilder.build();
             }, SOURCE, false);
 
             image.close();

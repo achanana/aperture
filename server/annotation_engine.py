@@ -95,29 +95,35 @@ class ApertureServer(gb_cognitive_engine.Engine):
 
     def add_images_to_table(self):
         logging.info("Adding images to table")
-        image_filter = lambda f : f.lower().endswith("jpeg")
+        image_filter = lambda f : f.lower().endswith("jpg")
         db_filelist = \
             [os.path.join(self.db_path, f) for f in os.listdir(self.db_path) if
                  image_filter(f)]
+        print(db_filelist)
 
         for filename in db_filelist:
             img = cv2.imread(filename, 0)
             img = cv2.resize(img, (config.IM_WIDTH, config.IM_HEIGHT))
-            annotation_img = cv2.imread(filename.replace('jpeg', 'png'), -1)
-            annotation_img = cv2.resize(annotation_img,
-                                        (config.IM_WIDTH, config.IM_HEIGHT))
-            annotation_text_filename = filename.replace('jpeg', 'txt')
-            annotation_text = self.get_file_content(annotation_text_filename)
+            annotation_text_filename = filename.replace('jpg', 'txt')
+            annotation_data = self.get_file_content(annotation_text_filename)
 
-            hist = get_image_histogram(img)
+            annotation_data_lines = annotation_data.splitlines()
+            if len(annotation_data_lines) != 3:
+                logging.fatal("expected 3 lines in the annotation data file")
+            annotation_text = annotation_data_lines[0]
+            latitude = float(annotation_data_lines[1])
+            longitude = float(annotation_data_lines[2])
+
+            hist = self.get_image_histogram(img)
             kp, des = self.feature_extraction_algo.detectAndCompute(img, None)
 
             # Store the keypoints, descriptors, hist, image name, and cv image
             # in the database
             self.table.add_annotation(filename, kp, des, hist, img,
-                                      annotation_text, annotation_img)
+                                      annotation_text, latitude, longitude,
+                                      persist_to_disk=False)
 
-    def add_new_annotation(self, annotation_data, frame):
+    def add_new_annotation(self, extras, frame):
         '''
         Add a new annotation to the database if the client specifies one.
         '''
@@ -135,13 +141,13 @@ class ApertureServer(gb_cognitive_engine.Engine):
         annotation_index = self.get_next_annotation_file_index()
         annotation_filename = 'annotation' + str(annotation_index)
 
-        annotation_location = annotation_data.annotation_location
+        latitude = extras.current_location.latitude
+        longitude = extras.current_location.longitude
+
         # Add annotation to the database.
-        print(f"Annotation data: {annotation_data.annotation_text}")
-        print(f"Annotation location: {annotation_location.latitude}, {annotation_location.longitude}")
         self.table.add_annotation(
             annotation_filename, kp, des, hist, annotation_image,
-            annotation_data.annotation_text)
+            extras.annotation_text, latitude, longitude)
 
     def handle(self, input_frame):
         # Receive data from control VM
@@ -153,19 +159,26 @@ class ApertureServer(gb_cognitive_engine.Engine):
         frame_bytes = input_frame.payloads[0]
         frame = np.frombuffer(input_frame.payloads[0], dtype=np.uint8)
 
-        # If the client specifies the extras field then an annotation should
-        # be added to the database.
+        latitude = 0
+        longitude = 0
         if input_frame.HasField('extras'):
-            print(input_frame.extras.type_url)
-            annotation_data = client_extras_pb2.AnnotationData()
-            input_frame.extras.Unpack(annotation_data)
-            self.add_new_annotation(annotation_data, frame)
+            extras = client_extras_pb2.Extras()
+            input_frame.extras.Unpack(extras)
+            if not extras.HasField('current_location'):
+                logging.error("No current_location field")
+            latitude = extras.current_location.latitude
+            longitude = extras.current_location.longitude
+            if extras.HasField('annotation_text'):
+                self.add_new_annotation(extras, frame)
+        else:
+            logging.error("Did not receive extras field")
 
         # Preprocessing of input image
         img = cv2.imdecode(frame, cv2.IMREAD_GRAYSCALE)
 
         # Get image match
-        match = self.matcher.match(img)
+        query_coords = (latitude, longitude)
+        match = self.matcher.match(img, query_coords)
 
         # Send annotation data to mobile client
         annotation = {}
