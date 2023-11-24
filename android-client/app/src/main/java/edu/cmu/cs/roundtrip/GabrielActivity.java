@@ -1,34 +1,19 @@
 package edu.cmu.cs.roundtrip;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.hardware.Camera;
-import android.hardware.Sensor;
-import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.media.AudioRecord;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
-
-import java.util.Locale;
-
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.MediaController;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -41,20 +26,19 @@ import androidx.core.app.ActivityCompat;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 
-import java.io.ByteArrayOutputStream;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 import edu.cmu.cs.gabriel.camera.CameraCapture;
 import edu.cmu.cs.gabriel.camera.YuvToJPEGConverter;
-import edu.cmu.cs.gabriel.camera.ImageViewUpdater;
 import edu.cmu.cs.gabriel.client.comm.ServerComm;
 import edu.cmu.cs.gabriel.client.results.ErrorType;
 import edu.cmu.cs.gabriel.protocol.Protos;
 import edu.cmu.cs.gabriel.protocol.Protos.InputFrame;
-import edu.cmu.cs.gabriel.protocol.Protos.ResultWrapper;
 import edu.cmu.cs.gabriel.protocol.Protos.PayloadType;
+import edu.cmu.cs.gabriel.protocol.Protos.ResultWrapper;
 import edu.cmu.cs.roundtrip.protos.ClientExtras;
 
 public class GabrielActivity extends AppCompatActivity {
@@ -83,12 +67,8 @@ public class GabrielActivity extends AppCompatActivity {
     private String prev_spoken = "";
 
 
-    private LocationManager locationManager;
-
     private double currLatitude = 0;
     private double currLongitude = 0;
-
-    private LocationListener listener = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -200,21 +180,14 @@ public class GabrielActivity extends AppCompatActivity {
         // This verification should be done during onStart() because the system calls
         // this method when the user returns to the activity, which ensures the desired
         // location provider is enabled each time the activity resumes from the stopped state.
-        locationManager =
-                (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        final boolean locEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        final boolean locEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
-        listener = new LocationListener() {
-
+        LocationListener listener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                // A new location update is received.  Do something useful with it.  In this case,
-                // we're sending the update to a handler which then updates the UI with the new
-                // location.
-
                 currLatitude = location.getLatitude();
                 currLongitude = location.getLongitude();
-
             }
 
             @Override
@@ -231,7 +204,6 @@ public class GabrielActivity extends AppCompatActivity {
             public void onProviderDisabled(String s) {
 
             }
-
         };
 
 
@@ -248,14 +220,11 @@ public class GabrielActivity extends AppCompatActivity {
                 // Seems IDE requires to add this check, but we've taken care of this
                 return;
             }
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                     10000,          // 10-second interval.
                     0,             // 10 meters.
                     listener);
         }
-
-
-
     }
 
     private void enableLocationSettings() {
@@ -274,10 +243,15 @@ public class GabrielActivity extends AppCompatActivity {
 
                 if (!typed_string.isEmpty()) {
                     // TODO: Send currLatitude and currLongitude to server
+                    ClientExtras.Location location =
+                            ClientExtras.Location.newBuilder()
+                                    .setLatitude(currLatitude)
+                                    .setLongitude(currLongitude)
+                                    .build();
                     ClientExtras.AnnotationData annotationData =
                             ClientExtras.AnnotationData.newBuilder()
                                     .setAnnotationText(typed_string)
-                                    .setFrameData(jpegByteString)
+                                    .setAnnotationLocation(location)
                                     .build();
                     Any any = Any.newBuilder()
                             .setValue(annotationData.toByteString())

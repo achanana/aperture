@@ -117,17 +117,14 @@ class ApertureServer(gb_cognitive_engine.Engine):
             self.table.add_annotation(filename, kp, des, hist, img,
                                       annotation_text, annotation_img)
 
-    def add_new_annotation(self, annotation_data):
+    def add_new_annotation(self, annotation_data, frame):
         '''
         Add a new annotation to the database if the client specifies one.
         '''
 
         # The frame that the annotation corresponds to.
-        annotation_image_bytes = annotation_data.frame_data
-        annotation_image_array = \
-            np.frombuffer(annotation_image_bytes, dtype=np.uint8)
         annotation_image = \
-            cv2.imdecode(annotation_image_array, cv2.IMREAD_GRAYSCALE)
+            cv2.imdecode(frame, cv2.IMREAD_GRAYSCALE)
         annotation_image = \
             cv2.resize(annotation_image, (config.IM_WIDTH, config.IM_HEIGHT))
 
@@ -138,7 +135,10 @@ class ApertureServer(gb_cognitive_engine.Engine):
         annotation_index = self.get_next_annotation_file_index()
         annotation_filename = 'annotation' + str(annotation_index)
 
+        annotation_location = annotation_data.annotation_location
         # Add annotation to the database.
+        print(f"Annotation data: {annotation_data.annotation_text}")
+        print(f"Annotation location: {annotation_location.latitude}, {annotation_location.longitude}")
         self.table.add_annotation(
             annotation_filename, kp, des, hist, annotation_image,
             annotation_data.annotation_text)
@@ -150,16 +150,16 @@ class ApertureServer(gb_cognitive_engine.Engine):
 
         status = gabriel_pb2.ResultWrapper.Status.SUCCESS
 
+        frame_bytes = input_frame.payloads[0]
+        frame = np.frombuffer(input_frame.payloads[0], dtype=np.uint8)
+
         # If the client specifies the extras field then an annotation should
         # be added to the database.
         if input_frame.HasField('extras'):
             print(input_frame.extras.type_url)
             annotation_data = client_extras_pb2.AnnotationData()
             input_frame.extras.Unpack(annotation_data)
-            self.add_new_annotation(annotation_data)
-
-        frame_bytes = input_frame.payloads[0]
-        frame = np.frombuffer(input_frame.payloads[0], dtype=np.uint8)
+            self.add_new_annotation(annotation_data, frame)
 
         # Preprocessing of input image
         img = cv2.imdecode(frame, cv2.IMREAD_GRAYSCALE)
