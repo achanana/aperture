@@ -14,6 +14,7 @@ import sys
 import numpy as np
 import pyttsx3
 import json
+import time
 
 import config
 import match
@@ -178,7 +179,11 @@ class ApertureServer(gb_cognitive_engine.Engine):
 
         # Get image match
         query_coords = (latitude, longitude)
+        match_start_time = time.time()
         match = self.matcher.match(img, query_coords)
+        match_end_time = time.time()
+        logging.info(f"It took {match_end_time - match_start_time} seconds"
+                      " to performing image matching")
 
         # Send annotation data to mobile client
         annotation = {}
