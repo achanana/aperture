@@ -171,7 +171,8 @@ class ImageMatcher:
 
     @staticmethod
     def coordinates_in_proximity(coord1, coord2, thresh_meters):
-        return distance.distance(coord1, coord2).meters < thresh_meters
+        d = distance.distance(coord1, coord2).meters
+        return d < thresh_meters
 
     def match(self, query_img, query_coords, display_match = True):
         response = {}
@@ -185,8 +186,7 @@ class ImageMatcher:
         query_kp, query_des = self.surf.detectAndCompute(query_img, None)
 
         if len(query_kp) is None:
-            response['status'] = 'success'
-            response['image'] = None
+            response['key'] = None
             return response
 
         # Find the best match in the database
@@ -203,8 +203,9 @@ class ImageMatcher:
             train_coords = (train_data.latitude, train_data.longitude)
 
             if not self.coordinates_in_proximity(train_coords, query_coords, 50):
-                logging.info(f"Skip matching against {key=} because it is not "
-                             "in proximity of query coords")
+                logging.info(f"Skip matching against {key=} because its "
+                             f"location {train_coords=} is not "
+                             f"in proximity of current coords {query_coords=}: ")
                 continue
 
             score, shift, matches = \

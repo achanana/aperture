@@ -14,27 +14,27 @@ class ImageDataTable:
         return self.table.keys()
 
     ## Get operations
-    def get_annotation_text(self, image):
-        response = self.table[image].annotation_text
+    def get_annotation_text(self, key):
+        response = self.table[key].annotation_text
         return response
 
-    def get_keypoints(self, image):
-        response = self.table[image].kp
+    def get_keypoints(self, key):
+        response = self.table[key].kp
         return response
 
-    def get_descriptors(self, image):
-        response = self.table[image].des
+    def get_descriptors(self, key):
+        response = self.table[key].des
         return response
 
-    def get_histogram(self, image):
-        response = self.table[image].hist
+    def get_histogram(self, key):
+        response = self.table[key].hist
         return response
 
-    def get_image(self, image):
-        return self.table[image].img
+    def get_image(self, key):
+        return self.table[key].img
 
-    def get_all_data(self, image):
-        return self.table[image]
+    def get_all_data(self, key):
+        return self.table[key]
 
     ## Add operations
     def add_annotation(self, key, kp, des, hist, img,
