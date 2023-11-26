@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -91,6 +92,8 @@ public class GabrielActivity extends AppCompatActivity {
                         0,          // 10-second interval.
                         0,                      // 10 meters.
                         listener);
+            } else {
+                Toast.makeText(this, "Location permissions are required for annotations", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -104,8 +107,8 @@ public class GabrielActivity extends AppCompatActivity {
         PreviewView previewView = findViewById(R.id.preview);
         textView = findViewById(R.id.textAnnotation);
         editText = findViewById(R.id.editText);
-        Button button = findViewById(R.id.startAnnotationButton);
 
+        Button button = findViewById(R.id.startAnnotationButton);
         prev_time = System.currentTimeMillis();
         tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
             @Override
@@ -209,9 +212,9 @@ public class GabrielActivity extends AppCompatActivity {
         listener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
+
                 currLatitude = location.getLatitude();
                 currLongitude = location.getLongitude();
-                textView.setText("currLatitude: "+(int)currLatitude+ "currLongitude: "+(int)currLongitude);
             }
 
             @Override
@@ -242,8 +245,7 @@ public class GabrielActivity extends AppCompatActivity {
                 PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission
                 (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.i(TAG, "Requesting permissions for location");
-            ActivityCompat.requestPermissions(
-                    this,
+            requestPermissions(
                     new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION},
                     PERMISSION_REQUEST_LOCATION
             );

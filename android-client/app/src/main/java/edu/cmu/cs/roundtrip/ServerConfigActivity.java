@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
@@ -23,9 +24,14 @@ public class ServerConfigActivity extends Activity {
             @Override
             public void onClick(View view) {
                 String server_ip = textBox.getText().toString();
-                Intent i = new Intent(ServerConfigActivity.this, GabrielActivity.class);
-                i.putExtra("server_ip", server_ip);
-                startActivity(i);
+                if (SocketParser.getPort(server_ip).isPresent() &&
+                        SocketParser.getIpAddress(server_ip).isPresent()) {
+                    Intent i = new Intent(ServerConfigActivity.this, GabrielActivity.class);
+                    i.putExtra("server_ip", server_ip);
+                    startActivity(i);
+                } else {
+                    Toast.makeText(ServerConfigActivity.this, "Invalid server IP. Enter \"hostname:port\"", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
