@@ -1,0 +1,1 @@
+~/Downloads/protoc/bin/protoc --java_out=lite:/home/achanana/Documents/aperture/android-client/app/src/main/java --python_out=generated_proto/ client_extras.proto
