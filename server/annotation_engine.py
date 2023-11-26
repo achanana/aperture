@@ -100,7 +100,6 @@ class ApertureServer(gb_cognitive_engine.Engine):
         db_filelist = \
             [os.path.join(self.db_path, f) for f in os.listdir(self.db_path) if
                  image_filter(f)]
-        print(db_filelist)
 
         for filename in db_filelist:
             img = cv2.imread(filename, 0)
@@ -120,7 +119,8 @@ class ApertureServer(gb_cognitive_engine.Engine):
 
             # Store the keypoints, descriptors, hist, image name, and cv image
             # in the database
-            self.table.add_annotation(filename, kp, des, hist, img,
+            key = os.path.splitext(os.path.basename(filename))[0]
+            self.table.add_annotation(key, kp, des, hist, img,
                                       annotation_text, latitude, longitude,
                                       persist_to_disk=False)
 
