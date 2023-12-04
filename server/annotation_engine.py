@@ -15,6 +15,8 @@ import numpy as np
 import pyttsx3
 import json
 import time
+from pynput import keyboard
+from threading import Lock
 
 import config
 import match
@@ -25,6 +27,9 @@ from generated_proto import client_extras_pb2
 DEFAULT_SOURCE_NAME = 'roundtrip'
 DEFAULT_SERVER_HOST = 'localhost'
 ZMQ_PORT = 5555
+VLOG1 = 15
+VLOG2 = 14
+VLOG3 = 13
 
 def parse_source_name_server_host():
     parser = argparse.ArgumentParser()
@@ -36,6 +41,7 @@ def engine_factory(image_db):
     return lambda: ApertureServer(image_db)
 
 def main():
+    # logging.basicConfig(level=VLOG1)
     image_db = table.ImageDataTable()
     logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
     SERVER_ADDRESS_FORMAT = 'tcp://{}:{}'
@@ -60,6 +66,29 @@ class ApertureServer(gb_cognitive_engine.Engine):
             os.makedirs(self.db_path)
 
         self.add_images_to_table()
+
+        self.gpsFilterLock = Lock()
+        self.gpsFilterEnabled = True
+
+        listener = keyboard.Listener(on_press=self.on_press)
+        listener.start()
+
+    def on_press(self, key):
+        try:
+            if (key.char == 'g'):
+                enabled = False
+                with self.gpsFilterLock:
+                    self.gpsFilterEnabled = not self.gpsFilterEnabled
+                    enabled = self.gpsFilterEnabled
+                if enabled:
+                    logStr = """***************************************************\nEnabled GPS matching filter\n***************************************************"""
+                    logging.info(logStr)
+                else:
+                    logStr = """***************************************************\nDisabled GPS matching filter\n***************************************************"""
+                    logging.info(logStr)
+
+        except AttributeError:
+            pass
 
     @staticmethod
     def get_next_annotation_file_index():
@@ -152,7 +181,7 @@ class ApertureServer(gb_cognitive_engine.Engine):
 
     def handle(self, input_frame):
         # Receive data from control VM
-        logging.info("received new image")
+        logging.log(VLOG1, "received new image")
         result = {}
 
         status = gabriel_pb2.ResultWrapper.Status.SUCCESS
@@ -180,14 +209,22 @@ class ApertureServer(gb_cognitive_engine.Engine):
         # Get image match
         query_coords = (latitude, longitude)
         match_start_time = time.time()
-        match = self.matcher.match(img, query_coords)
+        useGpsFilter = False
+        with self.gpsFilterLock:
+            useGpsFilter = self.gpsFilterEnabled
+        logging.info(f"{useGpsFilter=}")
+
+        match = self.matcher.match(img, query_coords, gps_filtering=useGpsFilter)
         match_end_time = time.time()
-        logging.info(f"It took {match_end_time - match_start_time} seconds"
-                      " to performing image matching")
 
         # Send annotation data to mobile client
         annotation = {}
         if match['key'] is not None:
+            num_matches_considered = match['num_matches_considered']
+            logging.info(f"Match found: {match['key']}. "
+                         f"It took {match_end_time - match_start_time} seconds"
+                          " to performing image matching against "
+                         f"{num_matches_considered} stored annotations")
             annotated_text = match['annotated_text']
         else:
             annotated_text = None

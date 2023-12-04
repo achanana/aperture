@@ -124,6 +124,7 @@ public class GabrielActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        startLocationUpdates();
     }
 
     @SuppressLint("MissingPermission")
@@ -141,7 +142,7 @@ public class GabrielActivity extends AppCompatActivity {
                 assert location != null;
                 currLatitude = location.getLatitude();
                 currLongitude = location.getLongitude();
-                Log.i(TAG, "latitude: " + Double.toString(currLatitude));
+                Log.i(TAG, "latitude: " + Double.toString(currLatitude) + " longitude: " + Double.toString(currLongitude));
             }
         };
 
@@ -260,7 +261,6 @@ public class GabrielActivity extends AppCompatActivity {
                 consumer, host, Integer.parseInt(port), getApplication(), onDisconnect);
 
         yuvToJPEGConverter = new YuvToJPEGConverter(this);
-        cameraCapture = new CameraCapture(GabrielActivity.this, analyzer, WIDTH, HEIGHT, previewView);
 
         setupLocationUpdates();
         maybeRequestPermissions();
@@ -306,7 +306,7 @@ public class GabrielActivity extends AppCompatActivity {
                 } else {
                     Log.i(TAG, "Location and camera access granted");
                     startLocationUpdates();
-//                    cameraCapture = new CameraCapture(GabrielActivity.this, analyzer, WIDTH, HEIGHT, previewView);
+                    cameraCapture = new CameraCapture(GabrielActivity.this, analyzer, WIDTH, HEIGHT, previewView);
                 }
             };
             ActivityResultLauncher<String[]> locationPermissionRequest = registerForActivityResult(
@@ -319,13 +319,13 @@ public class GabrielActivity extends AppCompatActivity {
         } else {
             Log.i(TAG, "Location and camera access already provided");
             startLocationUpdates();
+            cameraCapture = new CameraCapture(GabrielActivity.this, analyzer, WIDTH, HEIGHT, previewView);
         }
     }
 
     final private ImageAnalysis.Analyzer analyzer = new ImageAnalysis.Analyzer() {
         @Override
         public void analyze(@NonNull ImageProxy image) {
-            Log.i(TAG, "Analyzing image");
             serverComm.sendSupplier(() -> {
                 ByteString jpegByteString = yuvToJPEGConverter.convert(image);
 

@@ -15,6 +15,9 @@ import table
 sys.path.insert(0, "..")
 import zhuocv as zc
 
+VLOG1 = 15
+VLOG2 = 14
+VLOG3 = 13
 
 class ImageMatcher:
     def __init__(self, table):
@@ -116,50 +119,60 @@ class ImageMatcher:
         logging.debug("DCT CORRELATION: {0}".format(dct_correl))
 
         # Calculate match threshold based on the number of keypoints detected in the database image and the query image
-        train_threshold = 0.1 * len(train_kp)
-        query_threshold = 0.1 * len(query_kp)
+        train_threshold = 0.07 * len(train_kp)
+        query_threshold = 0.07 * len(query_kp)
         threshold = max(train_threshold, query_threshold)
 
         logging.debug("THRESHOLD: {0}".format(threshold))
 
         # Reject match if number of detected matches is less than the threshold
         if len(matches) < threshold:
+            logging.log(VLOG1, f"{len(matches)=} is less than {threshold=}, did not match")
             return None, None, None
         else:
             score += len(matches)
 
         # calculate the relative displacement between two group of key points
-        shift_xs = []
-        shift_ys = []
-        for m in matches:
-            k_q = query_kp[m.queryIdx]
-            k_t = train_kp[m.trainIdx]
-            shift_xs.append(k_q.pt[0] - k_t.pt[0])
-            shift_ys.append(k_q.pt[1] - k_t.pt[1])
+        # shift_xs = []
+        # shift_ys = []
+        # for m in matches:
+        #     k_q = query_kp[m.queryIdx]
+        #     k_t = train_kp[m.trainIdx]
+        #     shift_xs.append(k_q.pt[0] - k_t.pt[0])
+        #     shift_ys.append(k_q.pt[1] - k_t.pt[1])
 
-        shift_x1 = sum(shift_xs) / len(shift_xs)
-        shift_y1 = sum(shift_ys) / len(shift_ys)
-        shift_x2 = np.median(np.array(shift_xs))
-        shift_y2 = np.median(np.array(shift_ys))
-        shift_x = (shift_x1 + shift_x2) / 2
-        shift_y = (shift_y1 + shift_y2) / 2
+        # shift_x1 = sum(shift_xs) / len(shift_xs)
+        # shift_y1 = sum(shift_ys) / len(shift_ys)
+        # shift_x2 = np.median(np.array(shift_xs))
+        # shift_y2 = np.median(np.array(shift_ys))
+        # shift_x = (shift_x1 + shift_x2) / 2
+        # shift_y = (shift_y1 + shift_y2) / 2
 
         hist_test_passes = 0
         if hist_correlation > config.CORREL_TH:
             hist_test_passes += 1
+        else:
+            logging.log(VLOG1, f"{hist_correlation=} < {config.CORREL_TH=}")
+
         if dct_correl > config.DCT_TH:
             hist_test_passes += 1
+        else:
+            logging.log(VLOG1, f"{dct_correl=} < {config.DCT_TH=}")
+
         if hist_mwn > config.MWN_TH:
             hist_test_passes += 1
+        else:
+            logging.log(VLOG1, f"{hist_mwn=} < {config.MWN_TH=}")
 
         # Reject match if less than 2 hist tests pass
-        if hist_test_passes >= 2:
+        if hist_test_passes >= 1:
             score += hist_correlation + dct_correl + hist_mwn
         else:
+            logging.log(VLOG1, f"{hist_test_passes=} tests passed, did not match")
             return None, None, None
 
         logging.debug("SCORE IS {0}".format(score))
-        return score, (shift_x, shift_y), matches
+        return score, None, matches
 
     def display_match(self, query_img, query_kp, train_img, train_kp, best_matches):
         match_img = \
@@ -174,7 +187,8 @@ class ImageMatcher:
         d = distance.distance(coord1, coord2).meters
         return d < thresh_meters
 
-    def match(self, query_img, query_coords, display_match = True):
+    def match(self, query_img, query_coords, gps_filtering = True,
+              display_match = True):
         response = {}
 
         query_img = cv2.resize(query_img, (config.IM_WIDTH, config.IM_HEIGHT))
@@ -183,7 +197,11 @@ class ImageMatcher:
         query_hist = cv2.calcHist([query_img], [0], None, [256], [0, 256])
 
         # Extract image features
+        match_start_time = time.time()
         query_kp, query_des = self.surf.detectAndCompute(query_img, None)
+        match_end_time = time.time()
+        logging.log(VLOG1, f"It took {match_end_time - match_start_time} seconds"
+                            " to extract features for the incoming frame")
 
         if len(query_kp) is None:
             response['key'] = None
@@ -195,18 +213,28 @@ class ImageMatcher:
         best_shift = None
         best_matches = None
 
-        logging.info(f"Finding best match for location {query_coords=}")
+        num_matches_considered = 0
+
+        logging.log(
+            VLOG1,
+            f"Finding best match for location {query_coords=} "
+            f"from {len(self.table.get_keys())} files")
         for key in self.table.get_keys():
             logging.debug("NOW COMPARING WITH: %s" % key)
 
             train_data = self.table.get_all_data(key)
             train_coords = (train_data.latitude, train_data.longitude)
 
-            if not self.coordinates_in_proximity(train_coords, query_coords, 50):
-                logging.info(f"Skip matching against {key=} because its "
-                             f"location {train_coords=} is not "
-                             f"in proximity of current coords {query_coords=}: ")
+            if gps_filtering and \
+                not self.coordinates_in_proximity(train_coords, query_coords, 50):
+                logging.log(
+                    VLOG2,
+                    f"Skip matching against {key=} because its "
+                    f"location {train_coords=} is not "
+                    f"in proximity of current coords {query_coords=}: ")
                 continue
+
+            num_matches_considered += 1
 
             score, shift, matches = \
                 self.compute_match_score(
@@ -219,7 +247,7 @@ class ImageMatcher:
                 best_matches = matches
 
         response = {'status' : 'success'}
-
+        response['num_matches_considered'] = num_matches_considered
 
         # Send response to server
         if best_fit == None:
@@ -230,7 +258,7 @@ class ImageMatcher:
                 train_data = self.table.get_all_data(best_fit)
                 self.display_match(query_img, query_kp, train_data.img, train_data.kp, best_matches)
 
-            logging.info("BEST FIT IS: {0}".format(best_fit))
+            logging.log(VLOG1, "BEST FIT IS: {0}".format(best_fit))
             response['key'] = best_fit
             annotated_text = self.table.get_annotation_text(best_fit)
             if annotated_text is not None:
