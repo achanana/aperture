@@ -212,7 +212,7 @@ class ApertureServer(gb_cognitive_engine.Engine):
         useGpsFilter = False
         with self.gpsFilterLock:
             useGpsFilter = self.gpsFilterEnabled
-        logging.info(f"{useGpsFilter=}")
+        logging.log(VLOG1, f"{useGpsFilter=}")
 
         match = self.matcher.match(img, query_coords, gps_filtering=useGpsFilter)
         match_end_time = time.time()
